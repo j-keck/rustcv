@@ -486,3 +486,8 @@ pub fn draw_contours(
         )
     }
 }
+
+/// Calculates all of the moments up to the third order of a polygon or rasterized shape.
+pub fn moments(src: &Mat, binary_image: bool) -> ffi::Moment {
+    unsafe { ffi::Moments(src.inner, binary_image) }
+}
