@@ -1,7 +1,7 @@
 //! [Image Processing](https://docs.opencv.org/master/d7/dbd/group__imgproc.html)
 
-use opencv_sys as ffi;
 use core::{BorderType, Mat, Point, Rect, Scalar, Size};
+use opencv_sys as ffi;
 
 fn to_points(curve: &mut [Point]) -> ffi::Points {
     ffi::Points {
@@ -413,4 +413,76 @@ pub enum InterpolationFlag {
 /// non-empty sz may be passed with zero for both fx and fy.
 pub fn resize(src: &Mat, dst: &mut Mat, sz: Size, fx: f64, fy: f64, interp: InterpolationFlag) {
     unsafe { ffi::Resize(src.inner, dst.inner, sz, fx, fy, interp as i32) }
+}
+
+/// Mode of the contour retrieval algorithm
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub enum RetrievalMode {
+    /// retrieves only the extreme outer contours.
+    External = 0,
+    /// retrieves all of the contours without establishing any hierarchical relationships.
+    List = 1,
+    /// retrieves all of the contours and organizes them into a two-level hierarchy.
+    /// At the top level, there are external boundaries of the components. At the second level,
+    /// there are boundaries of the holes. If there is another contour inside a hole of a connected
+    // component, it is still put at the top level.
+    CComp = 2,
+    /// retrieves all of the contours and reconstructs a full hierarchy of nested contours.
+    Tree = 3,
+    ///
+    Floodfill = 4,
+}
+
+/// Mode of the countour approsimation algorithm
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub enum ContourApproximationMode {
+    /// stores absolutely all the contour points. That is, any 2 subsequent points (x1,y1) and (x2,y2) of the
+    /// contour will be either horizontal, vertical or diagonal neighbors, that is, max(abs(x1-x2),abs(y2-y1))==1.
+    None = 1,
+    /// compresses horizontal, vertical, and diagonal segments and leaves only their end points.
+    /// For example, an up-right rectangular contour is encoded with 4 points.
+    Simple = 2,
+    /// applies one of the flavors of the Teh-Chin chain approximation algorithm
+    TC89L1 = 3,
+    /// applies one of the flavors of the Teh-Chin chain approximation algorithm
+    TC89KCOS = 4,
+}
+
+/// Finds contours in a binary image.
+pub fn find_contours(
+    src: &Mat,
+    mode: RetrievalMode,
+    method: ContourApproximationMode,
+) -> Vec<ffi::Contour> {
+    let countours = unsafe { ffi::FindContours(src.inner, mode as i32, method as i32) };
+
+    (0..(countours.length as isize))
+        .map(|i| unsafe { *countours.contours.offset(i) })
+        .collect()
+}
+
+/// Draws contours outlines or filled contours.
+pub fn draw_contours(
+    mat: &mut Mat,
+    contours: &Vec<ffi::Contour>,
+    contour_idx: usize,
+    color: Scalar,
+    thickness: i32,
+) {
+    let mut contours = contours.clone();
+    let ffi_contours = ffi::Contours {
+        contours: contours.as_mut_ptr(),
+        length: contours.len() as i32,
+    };
+
+    unsafe {
+        ffi::DrawContours(
+            mat.inner,
+            ffi_contours,
+            contour_idx as i32,
+            color,
+            thickness,
+        )
+    }
 }
