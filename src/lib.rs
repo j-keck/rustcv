@@ -29,6 +29,7 @@ pub mod highgui;
 pub mod imgcodecs;
 pub mod imgproc;
 pub mod objdetect;
+pub mod videoio;
 
 #[cfg(feature = "cuda")]
 pub mod cuda;
