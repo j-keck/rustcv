@@ -584,3 +584,17 @@ fn from_byte_array(arr: &ffi::ByteArray) -> Vec<u8> {
         )
     }
 }
+
+/// Checks if array elements lie between the elements of two other arrays.
+pub fn in_range(src: &Mat, lb: &Mat, ub: &Mat, dst: &mut Mat) {
+    unsafe {
+        ffi::Mat_InRange(src.inner, lb.inner, ub.inner, dst.inner);
+    }
+}
+
+/// Checks if array elements lie between the elements of two other arrays.
+pub fn in_range_with_scalar(src: &Mat, lb: Scalar, ub: Scalar, dst: &mut Mat) {
+    unsafe {
+        ffi::Mat_InRangeWithScalar(src.inner, lb, ub, dst.inner);
+    }
+}

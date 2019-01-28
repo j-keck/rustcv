@@ -53,3 +53,57 @@ fn mat_copy_to_with_mask() {
     compare(&mat, &copy, &mut diff, CompareType::Eq);
     assert_ne!(count_non_zero(&diff), 0);
 }
+
+#[test]
+fn test_in_range() {
+    let mut bytes = [99, 100, 110, 111];
+    let mat = Mat::new_from_bytes(2, 2, CvType::Cv8UC1, &mut bytes);
+
+    let lb = Mat::new_from_scalar(
+        Scalar {
+            val1: 100.0,
+            val2: 0.0,
+            val3: 0.0,
+            val4: 0.0,
+        },
+        CvType::Cv8UC1,
+    );
+
+    let ub = Mat::new_from_scalar(
+        Scalar {
+            val1: 110.0,
+            val2: 0.0,
+            val3: 0.0,
+            val4: 0.0,
+        },
+        CvType::Cv8UC1,
+    );
+
+    let mut dst = Mat::new();
+    in_range(&mat, &lb, &ub, &mut dst);
+    assert_eq!(dst.to_bytes(), vec![0, 255, 255, 0]);
+}
+
+#[test]
+fn test_in_range_with_scalar() {
+    let mut bytes = [99, 100, 110, 111];
+    let mat = Mat::new_from_bytes(2, 2, CvType::Cv8UC1, &mut bytes);
+
+    let lb = Scalar {
+        val1: 100.0,
+        val2: 0.0,
+        val3: 0.0,
+        val4: 0.0,
+    };
+
+    let ub = Scalar {
+        val1: 110.0,
+        val2: 0.0,
+        val3: 0.0,
+        val4: 0.0,
+    };
+
+    let mut dst = Mat::new();
+    in_range_with_scalar(&mat, lb, ub, &mut dst);
+    assert_eq!(dst.to_bytes(), vec![0, 255, 255, 0]);
+}
