@@ -1,0 +1,74 @@
+* Todos
+
+** TODO gocv's ByteArray has type 'char'
+
+  - src: https://github.com/hybridgroup/gocv/blob/2ec65a33d136d139ab177b078e67e1ac9988db6d/core.h#L14
+
+  - According to the C11 standard char can be signed or unsigned
+    src: https://stackoverflow.com/questions/46463064/what-causes-a-char-to-be-signed-or-unsigned-when-using-gcc
+
+  - so on x86, rust's data type for "ffi char" is 'i8', and on arm it's 'u8'
+
+  - check how to determine the current type in rust
+
+
+
+*** proof (on arm)
+
+#+BEGIN_SRC
+gcc -dM -E -x c /dev/null | grep -i CHAR
+#define __ARM_SIZEOF_WCHAR_T 4
+#define __UINT_LEAST8_TYPE__ unsigned char
+#define __CHAR_BIT__ 8
+#define __WCHAR_MAX__ 0xffffffffU
+#define __GCC_ATOMIC_CHAR_LOCK_FREE 2
+#define __GCC_ATOMIC_CHAR32_T_LOCK_FREE 2
+#define __CHAR_UNSIGNED__ 1
+#define __SCHAR_MAX__ 0x7f
+#define __WCHAR_MIN__ 0U
+#define __WCHAR_WIDTH__ 32
+#define __UINT8_TYPE__ unsigned char
+#define __SCHAR_WIDTH__ 8
+#define __INT8_TYPE__ signed char
+#define __GCC_ATOMIC_WCHAR_T_LOCK_FREE 2
+#define __CHAR16_TYPE__ short unsigned int
+#define __INT_LEAST8_TYPE__ signed char
+#define __WCHAR_TYPE__ unsigned int
+#define __GCC_ATOMIC_CHAR16_T_LOCK_FREE 2
+#define __SIZEOF_WCHAR_T__ 4
+#define __INT_FAST8_TYPE__ signed char
+#define __CHAR32_TYPE__ unsigned int
+#define __UINT_FAST8_TYPE__ unsigned char
+#+END_SRC
+
+note: $__CHAR_UNSIGNED__$ is defined
+
+
+
+*** diff for hardcoded fix on arm
+
+ #+BEGIN_SRC
+ diff --git a/src/core.rs b/src/core.rs
+ index 8c90e2c..d4c2332 100644
+ --- a/src/core.rs
+ +++ b/src/core.rs
+ @@ -126,7 +126,7 @@ impl Mat {
+      }
+
+      /// Creates an empty `Mat` struct from buffer.
+ -    pub fn new_from_bytes(rows: i32, cols: i32, t: CvType, buf: &mut [i8]) -> Mat {
+ +    pub fn new_from_bytes(rows: i32, cols: i32, t: CvType, buf: &mut [u8]) -> Mat {
+          Mat {
+              inner: unsafe { ffi::Mat_NewFromBytes(rows, cols, t as i32, to_byte_array(buf)) },
+          }
+ @@ -568,7 +568,7 @@ pub fn min_max_loc(input: &Mat) -> (f64, f64, Point, Point) {
+      (min, max, min_loc, max_loc)
+  }
+
+ -fn to_byte_array(buf: &mut [i8]) -> ffi::ByteArray {
+ +fn to_byte_array(buf: &mut [u8]) -> ffi::ByteArray {
+      ffi::ByteArray {
+          data: buf.as_mut_ptr(),
+          length: buf.len() as i32,
+ #+END_SRC
+
