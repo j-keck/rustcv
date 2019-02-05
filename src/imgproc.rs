@@ -491,3 +491,14 @@ pub fn draw_contours(
 pub fn moments(src: &Mat, binary_image: bool) -> ffi::Moment {
     unsafe { ffi::Moments(src.inner, binary_image) }
 }
+
+
+/// Calculates a contour area.
+pub fn contour_area(contour: ffi::Contour) -> f64 {
+    unsafe { ffi::ContourArea(contour) }
+}
+
+/// Calculates the up-right bounding rectangle.
+pub fn bounding_rect(contour: ffi::Contour) -> Rect {
+    unsafe { ffi::BoundingRect(contour) }
+}
