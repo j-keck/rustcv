@@ -1,8 +1,8 @@
 //! [Core data structures in OpenCV][opencv-core].
 //!
 //! [opencv-core]: https://docs.opencv.org/master/d0/de1/group__core.html
-use opencv_sys as ffi;
 use num_traits::FromPrimitive;
+use opencv_sys as ffi;
 
 /// The class `Mat` represents an n-dimensional dense numerical single-channel or multi-channel array.
 /// It can be used to store real or complex-valued vectors and matrices, grayscale or color images,
@@ -26,11 +26,15 @@ impl Drop for Mat {
     }
 }
 
-pub use opencv_sys::Scalar;
-pub use opencv_sys::Rect;
-pub use opencv_sys::Size;
-pub use opencv_sys::Point;
+pub use opencv_sys::Contour;
+pub use opencv_sys::Contours;
 pub use opencv_sys::KeyPoint;
+pub use opencv_sys::Point;
+pub use opencv_sys::Points;
+pub use opencv_sys::Rect;
+pub use opencv_sys::RotatedRect;
+pub use opencv_sys::Scalar;
+pub use opencv_sys::Size;
 
 /// Here is the `CvType` in an easy-to-read table.
 ///
@@ -129,6 +133,13 @@ impl Mat {
     pub fn new_from_bytes(rows: i32, cols: i32, t: CvType, buf: &mut [i8]) -> Mat {
         Mat {
             inner: unsafe { ffi::Mat_NewFromBytes(rows, cols, t as i32, to_byte_array(buf)) },
+        }
+    }
+
+    /// Creates a ...FIXME
+    pub fn new_with_size_from_scalar(rows: i32, cols: i32, t: CvType, s: Scalar) -> Mat {
+        Mat {
+            inner: unsafe { ffi::Mat_NewWithSizeFromScalar(s, rows, cols, t as i32) },
         }
     }
 
@@ -411,16 +422,8 @@ pub fn batch_distance(
 ) {
     unsafe {
         ffi::Mat_BatchDistance(
-            src1.inner,
-            src2.inner,
-            dist.inner,
-            dtype,
-            nidx.inner,
-            norm_type,
-            k,
-            mask.inner,
-            update,
-            crosscheck,
+            src1.inner, src2.inner, dist.inner, dtype, nidx.inner, norm_type, k, mask.inner,
+            update, crosscheck,
         )
     }
 }

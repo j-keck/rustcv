@@ -76,7 +76,7 @@ fn test_match_template() {
 fn test_median_blur() {
     let src = lenna();
     let mut dst = Mat::new();
-    median_blur(&src, &mut dst, 1);
+    median_blur(&src, &mut dst, 3);
     assert!(!dst.empty());
     assert_eq!(src.rows(), dst.rows());
     assert_eq!(src.cols(), dst.cols());
@@ -145,3 +145,4 @@ fn test_resize() {
     assert_eq!(dst.cols(), 440);
     assert_eq!(dst.rows(), 377);
 }
+

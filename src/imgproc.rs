@@ -1,6 +1,6 @@
 //! [Image Processing](https://docs.opencv.org/master/d7/dbd/group__imgproc.html)
 
-use core::{BorderType, Mat, Point, Rect, Scalar, Size};
+use core::{BorderType, Mat, Point, Rect, RotatedRect, Scalar, Size};
 use opencv_sys as ffi;
 
 fn to_points(curve: &mut [Point]) -> ffi::Points {
@@ -454,44 +454,35 @@ pub fn find_contours(
     src: &Mat,
     mode: RetrievalMode,
     method: ContourApproximationMode,
-) -> Vec<ffi::Contour> {
-    let countours = unsafe { ffi::FindContours(src.inner, mode as i32, method as i32) };
+) -> ffi::Contours {
+    unsafe { ffi::FindContours(src.inner, mode as i32, method as i32) }
 
-    (0..(countours.length as isize))
-        .map(|i| unsafe { *countours.contours.offset(i) })
-        .collect()
+    // (0..(countours.length as isize))
+    //     .map(|i| unsafe { *countours.contours.offset(i) })
+    //     .collect()
 }
 
 /// Draws contours outlines or filled contours.
 pub fn draw_contours(
     mat: &mut Mat,
-    contours: &Vec<ffi::Contour>,
+    contours: ffi::Contours,
     contour_idx: usize,
     color: Scalar,
     thickness: i32,
 ) {
-    let mut contours = contours.clone();
-    let ffi_contours = ffi::Contours {
-        contours: contours.as_mut_ptr(),
-        length: contours.len() as i32,
-    };
+    // let mut contours = contours.clone();
+    // let ffi_contours = ffi::Contours {
+    //     contours: contours.as_mut_ptr(),
+    //     length: contours.len() as i32,
+    // };
 
-    unsafe {
-        ffi::DrawContours(
-            mat.inner,
-            ffi_contours,
-            contour_idx as i32,
-            color,
-            thickness,
-        )
-    }
+    unsafe { ffi::DrawContours(mat.inner, contours, contour_idx as i32, color, thickness) }
 }
 
 /// Calculates all of the moments up to the third order of a polygon or rasterized shape.
 pub fn moments(src: &Mat, binary_image: bool) -> ffi::Moment {
     unsafe { ffi::Moments(src.inner, binary_image) }
 }
-
 
 /// Calculates a contour area.
 pub fn contour_area(contour: ffi::Contour) -> f64 {
@@ -501,4 +492,13 @@ pub fn contour_area(contour: ffi::Contour) -> f64 {
 /// Calculates the up-right bounding rectangle.
 pub fn bounding_rect(contour: ffi::Contour) -> Rect {
     unsafe { ffi::BoundingRect(contour) }
+}
+
+/// Finds a rotated rectangle of the minimum area enclosing the input 2D point set.
+pub fn min_area_rect(contour: ffi::Contour) -> RotatedRect {
+    unsafe { ffi::MinAreaRect(contour) }
+}
+/// Approximates a polygonal curve(s) with the specified precision.
+pub fn approx_poly_dp(contour: ffi::Contour, epsilon: f64, closed: bool) -> ffi::Contour {
+    unsafe { ffi::ApproxPolyDP(contour, epsilon, closed) }
 }

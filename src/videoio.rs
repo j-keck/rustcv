@@ -1,6 +1,8 @@
 //! Class for video capturing from video files, image sequences or cameras.
 use core::*;
 use opencv_sys as ffi;
+use std::ffi::CString;
+use std::path::Path;
 
 /// VideoCapture
 #[derive(Debug)]
@@ -20,6 +22,13 @@ impl VideoCapture {
         VideoCapture {
             inner: unsafe { ffi::VideoCapture_New() },
         }
+    }
+
+    /// FIXME!!
+    pub fn open_file(&self, path: &Path) -> bool {
+        let cstr = CString::new(path.to_string_lossy().to_string()).unwrap();
+        let bytes = cstr.as_bytes_with_nul();
+        unsafe { ffi::VideoCapture_Open(self.inner, bytes.as_ptr() as *const i8) != 0 }
     }
 
     /// Opens a camera for video capturing
@@ -46,5 +55,65 @@ impl VideoCapture {
         } else {
             None
         }
+    }
+}
+
+/// VideoWriter
+#[derive(Debug)]
+pub struct VideoWriter {
+    inner: ffi::VideoWriter,
+}
+
+impl Drop for VideoWriter {
+    fn drop(&mut self) {
+        unsafe { ffi::VideoWriter_Close(self.inner) }
+    }
+}
+
+impl VideoWriter {
+    /// Default Constructor
+    pub fn new() -> Self {
+        VideoWriter {
+            inner: unsafe { ffi::VideoWriter_New() },
+        }
+    }
+
+    ///
+    pub fn open(
+        &self,
+        path: &Path,
+        codec: &str,
+        fps: f64,
+        width: i32,
+        height: i32,
+        is_color: bool,
+    ) {
+        let path_cstring = CString::new(path.to_string_lossy().to_string()).unwrap();
+        let path_bytes = path_cstring.as_bytes_with_nul();
+
+        let codec_cstring = CString::new(codec.to_string()).unwrap();
+        let codec_bytes = codec_cstring.as_bytes_with_nul();
+
+        unsafe {
+            ffi::VideoWriter_Open(
+                self.inner,
+                path_bytes.as_ptr() as *const i8,
+                codec_bytes.as_ptr() as *const i8,
+                fps,
+                width,
+                height,
+                is_color,
+            )
+        };
+    }
+
+    /// Returns true if video writer has been initialized already.
+    pub fn is_opened(&self) -> bool {
+        unsafe { ffi::VideoWriter_IsOpened(self.inner) != 0 }
+    }
+
+    ///
+    pub fn write(&self, frame: &Mat) {
+        unsafe { ffi::VideoWriter_Write(self.inner, frame.inner) };
     }
 }
