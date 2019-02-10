@@ -2,6 +2,7 @@
 
 use core::{BorderType, Mat, Point, Rect, RotatedRect, Scalar, Size};
 use opencv_sys as ffi;
+use std::ffi::CString;
 
 fn to_points(curve: &mut [Point]) -> ffi::Points {
     ffi::Points {
@@ -456,10 +457,6 @@ pub fn find_contours(
     method: ContourApproximationMode,
 ) -> ffi::Contours {
     unsafe { ffi::FindContours(src.inner, mode as i32, method as i32) }
-
-    // (0..(countours.length as isize))
-    //     .map(|i| unsafe { *countours.contours.offset(i) })
-    //     .collect()
 }
 
 /// Draws contours outlines or filled contours.
@@ -470,12 +467,6 @@ pub fn draw_contours(
     color: Scalar,
     thickness: i32,
 ) {
-    // let mut contours = contours.clone();
-    // let ffi_contours = ffi::Contours {
-    //     contours: contours.as_mut_ptr(),
-    //     length: contours.len() as i32,
-    // };
-
     unsafe { ffi::DrawContours(mat.inner, contours, contour_idx as i32, color, thickness) }
 }
 
@@ -501,4 +492,30 @@ pub fn min_area_rect(contour: ffi::Contour) -> RotatedRect {
 /// Approximates a polygonal curve(s) with the specified precision.
 pub fn approx_poly_dp(contour: ffi::Contour, epsilon: f64, closed: bool) -> ffi::Contour {
     unsafe { ffi::ApproxPolyDP(contour, epsilon, closed) }
+}
+
+///
+pub fn put_text(
+    mat: &mut Mat,
+    text: &str,
+    org: &Point,
+    font_face: i32,
+    font_scale: f64,
+    color: Scalar,
+    thickness: i32,
+) {
+    let cstr = CString::new(text.to_string()).unwrap();
+    let bytes = cstr.as_bytes_with_nul();
+
+    unsafe {
+        ffi::PutText(
+            mat.inner,
+            bytes.as_ptr() as *const i8,
+            *org,
+            font_face,
+            font_scale,
+            color,
+            thickness,
+        );
+    }
 }
